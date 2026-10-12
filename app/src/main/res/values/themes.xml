@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SakugaVault" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/sv_accent</item>
+        <item name="colorOnPrimary">@color/sv_bg</item>
+        <item name="colorPrimaryContainer">@color/sv_accent_dim</item>
+        <item name="colorOnPrimaryContainer">@color/sv_accent_soft</item>
+        <item name="colorSecondary">@color/sv_signal</item>
+        <item name="colorOnSecondary">@color/sv_bg</item>
+        <item name="colorSecondaryContainer">@color/sv_accent_dim</item>
+        <item name="colorOnSecondaryContainer">@color/sv_accent_soft</item>
+        <item name="colorSurface">@color/sv_surface</item>
+        <item name="colorOnSurface">@color/sv_text</item>
+        <item name="colorOnSurfaceVariant">@color/sv_muted</item>
+        <item name="colorOutline">@color/sv_muted</item>
+        <item name="colorError">@color/sv_danger</item>
+        <item name="android:colorBackground">@color/sv_bg</item>
+        <item name="android:windowBackground">@color/sv_bg</item>
+        <item name="android:textColorPrimary">@color/sv_text</item>
+        <item name="android:textColorSecondary">@color/sv_muted</item>
+    </style>
+
+    <style name="SvSectionTitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/sv_text</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="SvMuted">
+        <item name="android:textColor">@color/sv_muted</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+</resources>

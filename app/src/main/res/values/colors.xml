@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Same palette as the SakugaVault website (sakugavault-web/src/styles.css) -->
+    <color name="sv_bg">#FF0B0F15</color>
+    <color name="sv_surface">#FF121722</color>
+    <color name="sv_card">#FF1A2130</color>
+    <color name="sv_line">#26FFFFFF</color>
+    <color name="sv_text">#FFF6EFE6</color>
+    <color name="sv_muted">#FFB6B8C1</color>
+    <color name="sv_accent">#FFFF8844</color>
+    <color name="sv_accent_soft">#FFFFC774</color>
+    <color name="sv_accent_dim">#FF3A2618</color>
+    <color name="sv_signal">#FF7DE6FF</color>
+    <color name="sv_success">#FF7BE0B8</color>
+    <color name="sv_danger">#FFFF6B6B</color>
+    <color name="sv_scrim">#B3000000</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

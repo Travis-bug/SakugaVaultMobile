@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="210dp"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="10dp"
+    android:background="?attr/selectableItemBackground"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:id="@+id/contArt"
+        android:layout_width="match_parent"
+        android:layout_height="118dp">
+
+        <TextView
+            android:id="@+id/contInitials"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:alpha="0.85"
+            android:padding="10dp"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_play_button"
+            android:contentDescription="@string/cd_play_pause"
+            android:padding="9dp"
+            android:src="@drawable/ic_play" />
+    </FrameLayout>
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/contProgress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:max="100"
+        app:indicatorColor="@color/sv_accent"
+        app:trackColor="@color/sv_line"
+        app:trackThickness="4dp" />
+
+    <TextView
+        android:id="@+id/contTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/sv_text"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/contMeta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/sv_muted"
+        android:textSize="11sp" />
+</LinearLayout>

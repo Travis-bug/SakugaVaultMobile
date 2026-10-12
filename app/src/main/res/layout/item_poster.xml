@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="112dp"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="10dp"
+    android:background="?attr/selectableItemBackground"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:id="@+id/posterArt"
+        android:layout_width="match_parent"
+        android:layout_height="160dp">
+
+        <TextView
+            android:id="@+id/posterInitials"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:alpha="0.85"
+            android:textColor="@color/white"
+            android:textSize="30sp"
+            android:textStyle="bold" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/posterTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/sv_text"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/posterMeta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/sv_muted"
+        android:textSize="11sp" />
+</LinearLayout>
