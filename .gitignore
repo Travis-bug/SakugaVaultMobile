@@ -10,3 +10,6 @@
 .cxx/
 .kotlin/
 CLAUDE.md
+
+# Local test account details (never commit)
+test-account.local.properties
