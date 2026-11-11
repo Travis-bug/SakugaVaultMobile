@@ -11,6 +11,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <ImageView
+            android:id="@+id/heroImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/cd_poster"
+            android:scaleType="centerCrop" />
+
         <TextView
             android:id="@+id/heroArt"
             android:layout_width="match_parent"

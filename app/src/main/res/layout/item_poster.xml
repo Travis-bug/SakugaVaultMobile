@@ -20,6 +20,13 @@
             android:textColor="@color/white"
             android:textSize="30sp"
             android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/posterImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/cd_poster"
+            android:scaleType="centerCrop" />
     </FrameLayout>
 
     <TextView

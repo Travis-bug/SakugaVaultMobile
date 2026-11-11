@@ -24,6 +24,13 @@
             android:textStyle="bold" />
 
         <ImageView
+            android:id="@+id/contImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/cd_poster"
+            android:scaleType="centerCrop" />
+
+        <ImageView
             android:layout_width="42dp"
             android:layout_height="42dp"
             android:layout_gravity="center"

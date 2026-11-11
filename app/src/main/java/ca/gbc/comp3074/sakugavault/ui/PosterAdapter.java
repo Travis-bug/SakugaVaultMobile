@@ -3,6 +3,7 @@ package ca.gbc.comp3074.sakugavault.ui;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -14,7 +15,7 @@ import java.util.List;
 import ca.gbc.comp3074.sakugavault.R;
 import ca.gbc.comp3074.sakugavault.data.Anime;
 
-/** Poster cards, used for the Home genre rows and (grid mode) for Search results. */
+/** Poster cards, used for the Home genre rows, "More like this" and (grid mode) Search results. */
 public class PosterAdapter extends RecyclerView.Adapter<PosterAdapter.Holder> {
 
     public interface OnAnimeClick {
@@ -58,10 +59,13 @@ public class PosterAdapter extends RecyclerView.Adapter<PosterAdapter.Holder> {
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
         Anime anime = items.get(position);
-        holder.art.setBackground(Ui.art(holder.itemView.getContext(), anime, 10));
+        Ui.setArt(holder.art, anime, 10);
         holder.initials.setText(anime.initials());
+        Ui.loadImage(holder.image, anime.posterUrl);
         holder.title.setText(anime.title);
-        holder.meta.setText(anime.badgeLine());
+        String meta = anime.badgeLine();
+        holder.meta.setText(meta);
+        holder.meta.setVisibility(meta.isEmpty() ? View.GONE : View.VISIBLE);
         holder.itemView.setOnClickListener(v -> listener.onClick(anime));
     }
 
@@ -73,6 +77,7 @@ public class PosterAdapter extends RecyclerView.Adapter<PosterAdapter.Holder> {
     static class Holder extends RecyclerView.ViewHolder {
         final View art;
         final TextView initials;
+        final ImageView image;
         final TextView title;
         final TextView meta;
 
@@ -80,6 +85,7 @@ public class PosterAdapter extends RecyclerView.Adapter<PosterAdapter.Holder> {
             super(itemView);
             art = itemView.findViewById(R.id.posterArt);
             initials = itemView.findViewById(R.id.posterInitials);
+            image = itemView.findViewById(R.id.posterImage);
             title = itemView.findViewById(R.id.posterTitle);
             meta = itemView.findViewById(R.id.posterMeta);
         }

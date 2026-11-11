@@ -8,21 +8,26 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import ca.gbc.comp3074.sakugavault.R;
-import ca.gbc.comp3074.sakugavault.data.SampleData.Comment;
+import ca.gbc.comp3074.sakugavault.api.dto.CommentDto;
 
-/** Comments on the Title Detail screen (POST /api/catalog/comments in the real app). */
+/** Comments on the title page (from GET /api/watch/{id}; new ones go to POST /api/catalog/comments). */
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.Holder> {
 
-    private final List<Comment> items;
+    private final List<CommentDto> items = new ArrayList<>();
 
-    public CommentAdapter(List<Comment> items) {
-        this.items = items;
+    public void submit(List<CommentDto> data) {
+        items.clear();
+        if (data != null) {
+            items.addAll(data);
+        }
+        notifyDataSetChanged();
     }
 
-    public void addFirst(Comment comment) {
+    public void addFirst(CommentDto comment) {
         items.add(0, comment);
         notifyItemInserted(0);
     }
@@ -36,8 +41,9 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.Holder> 
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
-        Comment comment = items.get(position);
-        holder.header.setText(comment.user + " · " + comment.when);
+        CommentDto comment = items.get(position);
+        String when = Ui.timeAgo(comment.postedAtUtc);
+        holder.header.setText(when.isEmpty() ? comment.userName : comment.userName + " · " + when);
         holder.body.setText(comment.body);
     }
 

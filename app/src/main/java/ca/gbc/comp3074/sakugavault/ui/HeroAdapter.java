@@ -3,30 +3,48 @@ package ca.gbc.comp3074.sakugavault.ui;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import ca.gbc.comp3074.sakugavault.R;
 import ca.gbc.comp3074.sakugavault.data.Anime;
-import ca.gbc.comp3074.sakugavault.data.SampleData;
 
-/** Featured titles in the swipeable hero carousel on Home. */
+/** Featured titles in the swipeable hero carousel on Home, each with Watch Now and Watchlist buttons. */
 public class HeroAdapter extends RecyclerView.Adapter<HeroAdapter.Holder> {
+
+    public interface OnWatchlistToggle {
+        void onToggle(Anime anime, boolean currentlySaved, MaterialButton button);
+    }
 
     private final List<Anime> items;
     private final PosterAdapter.OnAnimeClick onWatch;
+    private final OnWatchlistToggle onToggle;
+    private final Set<String> savedIds = new HashSet<>();
 
-    public HeroAdapter(List<Anime> items, PosterAdapter.OnAnimeClick onWatch) {
+    public HeroAdapter(List<Anime> items, PosterAdapter.OnAnimeClick onWatch, OnWatchlistToggle onToggle) {
         this.items = items;
         this.onWatch = onWatch;
+        this.onToggle = onToggle;
+    }
+
+    /** Called whenever the watchlist changes, so each button shows "Watchlist" or "In Watchlist". */
+    public void setSavedIds(Collection<String> ids) {
+        savedIds.clear();
+        if (ids != null) {
+            savedIds.addAll(ids);
+        }
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -39,32 +57,22 @@ public class HeroAdapter extends RecyclerView.Adapter<HeroAdapter.Holder> {
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
         Anime anime = items.get(position);
-        holder.card.setBackground(Ui.art(holder.itemView.getContext(), anime, 16));
+        Ui.setArt(holder.card, anime, 16);
+        String image = anime.backdropUrl != null ? anime.backdropUrl : anime.posterUrl;
+        Ui.loadImage(holder.image, image);
         holder.art.setText(anime.title.toUpperCase(Locale.ROOT));
-        holder.genres.setText(anime.genreLine());
+        holder.art.setVisibility(image == null ? View.VISIBLE : View.GONE);
+        String genres = anime.genreLine();
+        holder.genres.setText(genres.isEmpty() ? "Featured" : genres);
         holder.title.setText(anime.title);
         holder.synopsis.setText(anime.synopsis);
         holder.watchNow.setOnClickListener(v -> onWatch.onClick(anime));
-        showWatchlistState(holder.watchlist, SampleData.WATCHLIST.contains(anime.id));
-        holder.watchlist.setOnClickListener(v -> {
-            boolean added;
-            if (SampleData.WATCHLIST.contains(anime.id)) {
-                SampleData.WATCHLIST.remove(anime.id);
-                added = false;
-            } else {
-                SampleData.WATCHLIST.add(anime.id);
-                added = true;
-            }
-            showWatchlistState(holder.watchlist, added);
-            Toast.makeText(v.getContext(),
-                    added ? "Added to your watchlist" : "Removed from your watchlist",
-                    Toast.LENGTH_SHORT).show();
-        });
-    }
 
-    private void showWatchlistState(MaterialButton button, boolean inList) {
-        button.setText(inList ? "In Watchlist" : "Watchlist");
-        button.setIconResource(inList ? R.drawable.ic_check : R.drawable.ic_add);
+        boolean saved = savedIds.contains(anime.id);
+        holder.watchlist.setEnabled(true);
+        holder.watchlist.setText(saved ? "In Watchlist" : "Watchlist");
+        holder.watchlist.setIconResource(saved ? R.drawable.ic_check : R.drawable.ic_add);
+        holder.watchlist.setOnClickListener(v -> onToggle.onToggle(anime, saved, holder.watchlist));
     }
 
     @Override
@@ -74,6 +82,7 @@ public class HeroAdapter extends RecyclerView.Adapter<HeroAdapter.Holder> {
 
     static class Holder extends RecyclerView.ViewHolder {
         final View card;
+        final ImageView image;
         final TextView art;
         final TextView genres;
         final TextView title;
@@ -84,6 +93,7 @@ public class HeroAdapter extends RecyclerView.Adapter<HeroAdapter.Holder> {
         Holder(@NonNull View itemView) {
             super(itemView);
             card = itemView.findViewById(R.id.heroCard);
+            image = itemView.findViewById(R.id.heroImage);
             art = itemView.findViewById(R.id.heroArt);
             genres = itemView.findViewById(R.id.heroGenres);
             title = itemView.findViewById(R.id.heroTitle);
