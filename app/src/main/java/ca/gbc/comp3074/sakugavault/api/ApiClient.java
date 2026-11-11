@@ -28,6 +28,7 @@ public final class ApiClient {
 
     private static SakugaVaultApi api;
     private static PersistentCookieJar cookieJar;
+    private static OkHttpClient mediaClient;
 
     private ApiClient() {
     }
@@ -64,6 +65,23 @@ public final class ApiClient {
                     .create(SakugaVaultApi.class);
         }
         return api;
+    }
+
+    /**
+     * The client the video player (Media3) downloads with. It shares the cookie jar, so the playback
+     * cookie that resolve-playback sets goes with every request to the stream proxy
+     * (/api/watch/streams/{id}), the way a browser sends it for the website's player.
+     */
+    public static synchronized OkHttpClient mediaClient(Context context) {
+        api(context); // makes sure the shared cookie jar exists
+        if (mediaClient == null) {
+            mediaClient = new OkHttpClient.Builder()
+                    .cookieJar(cookieJar)
+                    .connectTimeout(15, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .build();
+        }
+        return mediaClient;
     }
 
     /** Forgets the refresh and playback cookies (used when signing out). */

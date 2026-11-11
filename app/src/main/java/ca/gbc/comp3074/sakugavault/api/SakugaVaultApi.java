@@ -7,9 +7,11 @@ import ca.gbc.comp3074.sakugavault.api.dto.CursorPagedResult;
 import ca.gbc.comp3074.sakugavault.api.dto.EpisodeListResponseDto;
 import ca.gbc.comp3074.sakugavault.api.dto.HomeCatalogDto;
 import ca.gbc.comp3074.sakugavault.api.dto.LoginRequestDto;
+import ca.gbc.comp3074.sakugavault.api.dto.PlaybackResolutionRequestDto;
 import ca.gbc.comp3074.sakugavault.api.dto.PostCommentRequestDto;
 import ca.gbc.comp3074.sakugavault.api.dto.ProfileSummaryDto;
 import ca.gbc.comp3074.sakugavault.api.dto.RegisterRequestDto;
+import ca.gbc.comp3074.sakugavault.api.dto.ResolvedPlaybackDto;
 import ca.gbc.comp3074.sakugavault.api.dto.UpsertWatchHistoryRequestDto;
 import ca.gbc.comp3074.sakugavault.api.dto.WatchHistoryEntryDto;
 import ca.gbc.comp3074.sakugavault.api.dto.WatchPageDto;
@@ -55,6 +57,10 @@ public interface SakugaVaultApi {
 
     @GET("api/watch/{animeId}/episodes")
     Call<EpisodeListResponseDto> episodes(@Path("animeId") String animeId);
+
+    @POST("api/watch/{animeId}/resolve-playback")
+    Call<ResolvedPlaybackDto> resolvePlayback(@Path("animeId") String animeId,
+                                              @Body PlaybackResolutionRequestDto request);
 
     @GET("api/watch/history/me")
     Call<CursorPagedResult<WatchHistoryEntryDto>> myHistory(@Query("pageSize") int pageSize,
