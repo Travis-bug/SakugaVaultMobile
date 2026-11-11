@@ -63,6 +63,13 @@ dependencies {
     // Glide: loads poster and backdrop images
     implementation(libs.glide)
 
+    // Media3 (ExoPlayer): plays the HLS and MP4 streams the back end returns, and the demo videos.
+    // The OkHttp data source sends video requests through the app's OkHttp client and cookie jar.
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.exoplayer.hls)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.datasource.okhttp)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
