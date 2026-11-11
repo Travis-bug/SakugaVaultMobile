@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Debug builds only (merged on top of src/main/AndroidManifest.xml).
+    Android 17 blocks apps from reaching addresses on the local network - such as the
+    emulator's 10.0.2.2 or a computer's Wi-Fi IP - unless they hold this permission.
+    The local SakugaVault back end lives at one of those addresses, so debug builds ask
+    for it. A release build that talks to a public server doesn't need it.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
+</manifest>
