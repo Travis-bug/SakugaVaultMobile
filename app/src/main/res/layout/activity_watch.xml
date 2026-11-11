@@ -44,6 +44,15 @@
         android:layout_height="220dp"
         android:background="@color/black">
 
+        <!-- Backdrop image behind the (simulated) player -->
+        <ImageView
+            android:id="@+id/playerImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.45"
+            android:contentDescription="@string/cd_poster"
+            android:scaleType="centerCrop" />
+
         <TextView
             android:id="@+id/playerArt"
             android:layout_width="match_parent"
@@ -129,170 +138,234 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- Shown while GET /api/watch/{id} is loading, or if it fails -->
             <LinearLayout
+                android:id="@+id/loadStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingTop="32dp"
+                android:paddingBottom="32dp">
 
-                <com.google.android.material.button.MaterialButtonToggleGroup
-                    android:id="@+id/langToggle"
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/loadProgress"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:checkedButton="@id/btnSub"
-                    app:selectionRequired="true"
-                    app:singleSelection="true">
-
-                    <Button
-                        android:id="@+id/btnSub"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="SUB" />
-
-                    <Button
-                        android:id="@+id/btnDub"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="DUB" />
-                </com.google.android.material.button.MaterialButtonToggleGroup>
+                    android:indeterminate="true" />
 
                 <TextView
-                    android:id="@+id/tvLangInfo"
+                    android:id="@+id/tvLoadMessage"
                     style="@style/SvMuted"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/tvSyncStatus"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="@color/sv_success"
-                android:textSize="12sp" />
-
-            <TextView
-                android:id="@+id/tvTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:textColor="@color/sv_text"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvMeta"
-                style="@style/SvMuted"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp" />
-
-            <TextView
-                android:id="@+id/tvSynopsis"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:ellipsize="end"
-                android:maxLines="2"
-                android:textColor="@color/sv_text"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/tvMore"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp"
-                android:text="More"
-                android:textColor="@color/sv_accent"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="8dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    style="@style/SvSectionTitle"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:text="Episodes" />
-
-                <Spinner
-                    android:id="@+id/seasonSpinner"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/episodeList"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false" />
-
-            <TextView
-                android:id="@+id/tvCommentsHeader"
-                style="@style/SvSectionTitle"
-                android:layout_marginTop="18dp"
-                android:layout_marginBottom="8dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="Add a comment…">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etComment"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textCapSentences|textMultiLine"
-                        android:maxLength="2000"
-                        android:maxLines="3" />
-                </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_marginTop="12dp"
+                    android:gravity="center"
+                    android:text="Loading title…" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnPost"
+                    android:id="@+id/btnRetry"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="Post" />
+                    android:layout_marginTop="12dp"
+                    android:text="Try again"
+                    android:visibility="gone" />
             </LinearLayout>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/commentList"
+            <LinearLayout
+                android:id="@+id/detailsContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:nestedScrollingEnabled="false" />
+                android:orientation="vertical"
+                android:visibility="gone">
 
-            <TextView
-                style="@style/SvSectionTitle"
-                android:layout_marginTop="18dp"
-                android:layout_marginBottom="10dp"
-                android:text="More like this" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/similarList"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clipToPadding="false" />
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/langToggle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:checkedButton="@id/btnSub"
+                        app:selectionRequired="true"
+                        app:singleSelection="true">
+
+                        <Button
+                            android:id="@+id/btnSub"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="SUB" />
+
+                        <Button
+                            android:id="@+id/btnDub"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="DUB" />
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                    <TextView
+                        android:id="@+id/tvLangInfo"
+                        style="@style/SvMuted"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvSyncStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textColor="@color/sv_success"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:textColor="@color/sv_text"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvMeta"
+                    style="@style/SvMuted"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp" />
+
+                <!-- Saves this show to the watchlist (Room "Title" + "Metadata" tables) -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnWatchlist"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="Add to Watchlist"
+                    android:textColor="@color/sv_text"
+                    app:icon="@drawable/ic_add"
+                    app:iconTint="@color/sv_text" />
+
+                <TextView
+                    android:id="@+id/tvSynopsis"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:textColor="@color/sv_text"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvMore"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:text="More"
+                    android:textColor="@color/sv_accent"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="4dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        style="@style/SvSectionTitle"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:text="Episodes" />
+
+                    <Spinner
+                        android:id="@+id/seasonSpinner"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvEpisodesNote"
+                    style="@style/SvMuted"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="6dp"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/episodeList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false" />
+
+                <TextView
+                    android:id="@+id/tvCommentsHeader"
+                    style="@style/SvSectionTitle"
+                    android:layout_marginTop="18dp"
+                    android:layout_marginBottom="8dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="Add a comment…">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etComment"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textCapSentences|textMultiLine"
+                            android:maxLength="2000"
+                            android:maxLines="3" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPost"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Post" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/commentList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:nestedScrollingEnabled="false" />
+
+                <TextView
+                    android:id="@+id/tvSimilarHeader"
+                    style="@style/SvSectionTitle"
+                    android:layout_marginTop="18dp"
+                    android:layout_marginBottom="10dp"
+                    android:text="More like this" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/similarList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipToPadding="false" />
+            </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </LinearLayout>

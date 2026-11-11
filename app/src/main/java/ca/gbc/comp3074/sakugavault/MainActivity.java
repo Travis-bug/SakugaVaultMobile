@@ -1,5 +1,7 @@
 package ca.gbc.comp3074.sakugavault;
 
+import ca.gbc.comp3074.sakugavault.services.DeveloperLogger;
+
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;

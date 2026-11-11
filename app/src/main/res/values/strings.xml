@@ -6,5 +6,6 @@
     <string name="cd_back">Back</string>
     <string name="cd_play_pause">Play or pause</string>
     <string name="cd_fullscreen">Full screen</string>
-    <string name="prototype_note">UI prototype · sample data · no back end connected yet</string>
+    <string name="cd_poster">Poster</string>
+    <string name="prototype_note">Connected to the SakugaVault back end · the video player is simulated for now</string>
 </resources>

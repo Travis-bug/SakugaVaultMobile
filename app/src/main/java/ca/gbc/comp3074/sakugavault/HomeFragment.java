@@ -1,5 +1,7 @@
 package ca.gbc.comp3074.sakugavault;
 
+import ca.gbc.comp3074.sakugavault.services.DeveloperLogger;
+
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -18,34 +20,62 @@ import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.android.material.button.MaterialButton;
+
+import java.util.ArrayList;
 import java.util.List;
 
+import ca.gbc.comp3074.sakugavault.api.ApiCallback;
+import ca.gbc.comp3074.sakugavault.api.ApiError;
+import ca.gbc.comp3074.sakugavault.api.dto.AnimeCardDto;
+import ca.gbc.comp3074.sakugavault.api.dto.CatalogHeroDto;
+import ca.gbc.comp3074.sakugavault.api.dto.GenreRailDto;
+import ca.gbc.comp3074.sakugavault.api.dto.HomeCatalogDto;
+import ca.gbc.comp3074.sakugavault.api.dto.WatchHistoryEntryDto;
 import ca.gbc.comp3074.sakugavault.data.Anime;
-import ca.gbc.comp3074.sakugavault.data.SampleData;
+import ca.gbc.comp3074.sakugavault.data.local.WatchListEntry;
+import ca.gbc.comp3074.sakugavault.services.AppServices;
+import ca.gbc.comp3074.sakugavault.services.catalog.ICatalogService;
+import ca.gbc.comp3074.sakugavault.services.watch.IWatchHistoryService;
+import ca.gbc.comp3074.sakugavault.services.watch.IWatchListService;
 import ca.gbc.comp3074.sakugavault.ui.ContinueAdapter;
 import ca.gbc.comp3074.sakugavault.ui.HeroAdapter;
 import ca.gbc.comp3074.sakugavault.ui.PosterAdapter;
 import ca.gbc.comp3074.sakugavault.ui.Ui;
 
 /**
- * Home screen (FR-02, FR-05): hero carousel, Continue Watching and genre rows.
- * Next milestone: data from GET /api/catalog/home and GET /api/watch/history/me.
+ * Home screen (FR-02, FR-05).
+ * Hero carousel and genre rows from GET /api/catalog/home, Continue Watching from
+ * GET /api/watch/history/me, and the hero Watchlist buttons from the Room watchlist.
  */
 public class HomeFragment extends Fragment {
 
     private static final long AUTO_ADVANCE_MS = 5000;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private final List<Anime> heroItems = new ArrayList<>();
+
+    private ICatalogService catalog;
+    private IWatchHistoryService history;
+    private IWatchListService watchList;
+
+    private SwipeRefreshLayout swipe;
+    private TextView status;
     private RecyclerView heroList;
     private LinearLayout heroDots;
-    private int heroCount;
+    private HeroAdapter heroAdapter;
+    private View continueHeader;
+    private RecyclerView continueList;
+    private ContinueAdapter continueAdapter;
+    private LinearLayout railsContainer;
     private int heroPosition = 0;
+    private boolean firstResume = true;
 
     private final Runnable autoAdvance = new Runnable() {
         @Override
         public void run() {
-            if (heroList != null && heroCount > 0) {
-                heroPosition = (heroPosition + 1) % heroCount;
+            if (heroList != null && !heroItems.isEmpty()) {
+                heroPosition = (heroPosition + 1) % heroItems.size();
                 heroList.smoothScrollToPosition(heroPosition);
                 updateDots();
             }
@@ -63,6 +93,13 @@ public class HomeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        catalog = AppServices.catalog(requireContext());
+        history = AppServices.watchHistory(requireContext());
+        watchList = AppServices.watchList(requireContext());
+
+        status = view.findViewById(R.id.tvHomeStatus);
+        continueHeader = view.findViewById(R.id.tvContinueHeader);
+        railsContainer = view.findViewById(R.id.railsContainer);
 
         view.findViewById(R.id.btnSearch).setOnClickListener(v -> {
             if (getActivity() instanceof MainActivity) {
@@ -71,14 +108,12 @@ public class HomeFragment extends Fragment {
         });
 
         // Hero carousel: one featured title per page, snaps like a pager.
-        List<Anime> featured = SampleData.hero();
-        heroCount = featured.size();
         heroList = view.findViewById(R.id.heroList);
         heroList.setLayoutManager(new LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false));
-        heroList.setAdapter(new HeroAdapter(featured, anime -> openTitle(anime, 1, 0)));
+        heroAdapter = new HeroAdapter(heroItems, anime -> openTitle(anime.id, 1, 0), this::toggleWatchlist);
+        heroList.setAdapter(heroAdapter);
         new PagerSnapHelper().attachToRecyclerView(heroList);
         heroDots = view.findViewById(R.id.heroDots);
-        buildDots();
         heroList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
@@ -95,42 +130,173 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        // Continue Watching (titles in progress).
-        RecyclerView continueList = view.findViewById(R.id.continueList);
+        // Continue Watching: shows still in progress, from the tracked watch history.
+        continueList = view.findViewById(R.id.continueList);
         continueList.setLayoutManager(new LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false));
-        continueList.setAdapter(new ContinueAdapter(SampleData.continueWatching(), false,
-                entry -> openTitle(entry.anime, entry.episode, entry.percent)));
+        continueAdapter = new ContinueAdapter(false,
+                entry -> openTitle(entry.animeId, entry.episodeNumber, entry.positionSeconds));
+        continueList.setAdapter(continueAdapter);
 
-        // Genre rows share one view pool so fast scrolling stays smooth.
-        LinearLayout railsContainer = view.findViewById(R.id.railsContainer);
-        RecyclerView.RecycledViewPool sharedPool = new RecyclerView.RecycledViewPool();
-        LayoutInflater inflater = LayoutInflater.from(requireContext());
-        for (String genre : SampleData.RAIL_GENRES) {
-            View rail = inflater.inflate(R.layout.item_rail, railsContainer, false);
-            ((TextView) rail.findViewById(R.id.railTitle)).setText(genre);
-            RecyclerView list = rail.findViewById(R.id.railList);
-            list.setLayoutManager(new LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false));
-            list.setRecycledViewPool(sharedPool);
-            list.setHasFixedSize(true);
-            list.setAdapter(new PosterAdapter(SampleData.byGenre(genre), false, anime -> openTitle(anime, 1, 0)));
-            railsContainer.addView(rail);
-        }
+        // Watchlist buttons follow the Room tables: they update by themselves when a show is added or removed.
+        watchList.getSavedIds().observe(getViewLifecycleOwner(), ids -> heroAdapter.setSavedIds(ids));
 
-        // Pull to refresh (the real app re-fetches /api/catalog/home).
-        SwipeRefreshLayout swipe = view.findViewById(R.id.swipe);
+        swipe = view.findViewById(R.id.swipe);
         swipe.setColorSchemeResources(R.color.sv_accent);
         swipe.setProgressBackgroundColorSchemeResource(R.color.sv_surface);
-        swipe.setOnRefreshListener(() -> handler.postDelayed(() -> {
-            swipe.setRefreshing(false);
-            if (isAdded()) {
-                Toast.makeText(requireContext(), "Catalog refreshed", Toast.LENGTH_SHORT).show();
+        swipe.setOnRefreshListener(this::loadAll);
+
+        swipe.setRefreshing(true);
+        loadAll();
+    }
+
+    private boolean alive() {
+        return isAdded() && getView() != null;
+    }
+
+    private void loadAll() {
+        loadCatalog();
+        loadContinueWatching();
+    }
+
+    private void loadCatalog() {
+        catalog.getHome(new ApiCallback<HomeCatalogDto>() {
+            @Override
+            public void onSuccess(HomeCatalogDto home) {
+                if (!alive()) {
+                    return;
+                }
+                swipe.setRefreshing(false);
+                showCatalog(home);
             }
-        }, 1000));
+
+            @Override
+            public void onError(ApiError error) {
+                if (!alive()) {
+                    return;
+                }
+                swipe.setRefreshing(false);
+                if (Ui.handleSessionExpired(getActivity(), error)) {
+                    return;
+                }
+                showStatus(error.message + "\nPull down to try again.");
+            }
+        });
+    }
+
+    private void showCatalog(HomeCatalogDto home) {
+        heroItems.clear();
+        if (home != null && home.heroItems != null) {
+            for (CatalogHeroDto dto : home.heroItems) {
+                heroItems.add(Anime.fromHero(dto));
+            }
+        }
+        heroAdapter.notifyDataSetChanged();
+        heroPosition = 0;
+        heroList.scrollToPosition(0);
+        heroList.setVisibility(heroItems.isEmpty() ? View.GONE : View.VISIBLE);
+        buildDots();
+
+        // Genre rows share one view pool so fast scrolling stays smooth.
+        railsContainer.removeAllViews();
+        RecyclerView.RecycledViewPool sharedPool = new RecyclerView.RecycledViewPool();
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        int rails = 0;
+        if (home != null && home.genreRows != null) {
+            for (GenreRailDto row : home.genreRows) {
+                if (row.titles == null || row.titles.isEmpty()) {
+                    continue;
+                }
+                List<Anime> titles = new ArrayList<>();
+                for (AnimeCardDto card : row.titles) {
+                    titles.add(Anime.fromCard(card));
+                }
+                View rail = inflater.inflate(R.layout.item_rail, railsContainer, false);
+                ((TextView) rail.findViewById(R.id.railTitle)).setText(row.genre);
+                RecyclerView list = rail.findViewById(R.id.railList);
+                list.setLayoutManager(new LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false));
+                list.setRecycledViewPool(sharedPool);
+                list.setHasFixedSize(true);
+                list.setAdapter(new PosterAdapter(titles, false, anime -> openTitle(anime.id, 1, 0)));
+                railsContainer.addView(rail);
+                rails++;
+            }
+        }
+
+        if (heroItems.isEmpty() && rails == 0) {
+            showStatus("The catalog is empty right now. The anime source sites may be down.\nPull down to try again.");
+        } else {
+            status.setVisibility(View.GONE);
+        }
+    }
+
+    private void loadContinueWatching() {
+        history.getMyHistory(20, new ApiCallback<List<WatchHistoryEntryDto>>() {
+            @Override
+            public void onSuccess(List<WatchHistoryEntryDto> entries) {
+                if (!alive()) {
+                    return;
+                }
+                List<WatchHistoryEntryDto> inProgress = new ArrayList<>();
+                for (WatchHistoryEntryDto entry : entries) {
+                    if (!entry.completed) {
+                        inProgress.add(entry);
+                    }
+                }
+                continueAdapter.submit(inProgress);
+                int visibility = inProgress.isEmpty() ? View.GONE : View.VISIBLE;
+                continueHeader.setVisibility(visibility);
+                continueList.setVisibility(visibility);
+            }
+
+            @Override
+            public void onError(ApiError error) {
+                if (alive()) {
+                    Ui.handleSessionExpired(getActivity(), error);
+                }
+            }
+        });
+    }
+
+    /** Hero "Watchlist" button: add grabs the title + metadata from the back end and saves it in Room. */
+    private void toggleWatchlist(Anime anime, boolean saved, MaterialButton button) {
+        button.setEnabled(false);
+        if (saved) {
+            watchList.remove(anime.id, () -> {
+                if (alive()) {
+                    Toast.makeText(requireContext(), "Removed from your watchlist", Toast.LENGTH_SHORT).show();
+                }
+            });
+            return;
+        }
+        button.setText("Saving…");
+        watchList.add(anime.id, new ApiCallback<WatchListEntry>() {
+            @Override
+            public void onSuccess(WatchListEntry entry) {
+                if (alive()) {
+                    Toast.makeText(requireContext(), "Saved “" + anime.title + "” to your watchlist",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onError(ApiError error) {
+                if (!alive() || Ui.handleSessionExpired(getActivity(), error)) {
+                    return;
+                }
+                heroAdapter.notifyDataSetChanged(); // puts the button back to "Watchlist"
+                Toast.makeText(requireContext(), error.message, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void showStatus(String message) {
+        status.setText(message);
+        status.setVisibility(View.VISIBLE);
     }
 
     private void buildDots() {
         heroDots.removeAllViews();
-        for (int i = 0; i < heroCount; i++) {
+        for (int i = 0; i < heroItems.size(); i++) {
             View dot = new View(requireContext());
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(Ui.dp(requireContext(), 6), Ui.dp(requireContext(), 6));
             params.setMargins(Ui.dp(requireContext(), 3), 0, Ui.dp(requireContext(), 3), 0);
@@ -154,14 +320,19 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    private void openTitle(Anime anime, int episode, int percent) {
-        WatchActivity.start(requireContext(), anime.id, episode, percent);
+    private void openTitle(String animeId, int episode, int positionSeconds) {
+        WatchActivity.start(requireContext(), animeId, episode, positionSeconds);
     }
 
     @Override
     public void onResume() {
         super.onResume();
         handler.postDelayed(autoAdvance, AUTO_ADVANCE_MS);
+        // Coming back from the player: refresh Continue Watching so the new progress shows.
+        if (!firstResume) {
+            loadContinueWatching();
+        }
+        firstResume = false;
     }
 
     @Override

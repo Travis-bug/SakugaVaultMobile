@@ -1,5 +1,7 @@
 package ca.gbc.comp3074.sakugavault;
 
+import ca.gbc.comp3074.sakugavault.services.DeveloperLogger;
+
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -24,26 +26,40 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import ca.gbc.comp3074.sakugavault.api.ApiCallback;
+import ca.gbc.comp3074.sakugavault.api.ApiError;
+import ca.gbc.comp3074.sakugavault.api.dto.CatalogSearchResponseDto;
+import ca.gbc.comp3074.sakugavault.api.dto.SearchAnimeResultDto;
 import ca.gbc.comp3074.sakugavault.data.Anime;
-import ca.gbc.comp3074.sakugavault.data.SampleData;
+import ca.gbc.comp3074.sakugavault.services.AppServices;
+import ca.gbc.comp3074.sakugavault.services.catalog.ICatalogService;
 import ca.gbc.comp3074.sakugavault.ui.PosterAdapter;
+import ca.gbc.comp3074.sakugavault.ui.Ui;
 
 /**
- * Search screen (FR-06, FR-07): debounced keyword search plus genre chips.
- * Next milestone: GET /api/catalog/search?q=...&limit=...
+ * Search screen (FR-06, FR-07): GET /api/catalog/search?q=... after the user stops
+ * typing, plus genre chips that filter the results on the phone.
  */
 public class SearchFragment extends Fragment {
 
-    private static final long DEBOUNCE_MS = 300;
+    private static final long DEBOUNCE_MS = 400;
+    private static final int LIMIT = 30;
+    /** The back end's genres (Data/SakugaVaultSeeder). */
+    private static final String[] GENRES = {"All", "Action", "Adventure", "Comedy", "Drama", "Fantasy",
+            "Mystery", "Romance", "Sci-Fi", "Sports", "Supernatural"};
 
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private final Runnable runSearch = this::applyFilters;
+    private final Runnable runSearch = this::search;
+    private final List<Anime> lastResults = new ArrayList<>();
 
+    private ICatalogService catalog;
     private PosterAdapter adapter;
     private TextView header;
     private TextView empty;
     private String query = "";
     private String genre = "All";
+    /** Each search gets a number so an older, slower answer can't overwrite a newer one. */
+    private int searchNumber = 0;
 
     @Nullable
     @Override
@@ -55,6 +71,7 @@ public class SearchFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        catalog = AppServices.catalog(requireContext());
         header = view.findViewById(R.id.tvResultsHeader);
         empty = view.findViewById(R.id.tvEmpty);
 
@@ -69,7 +86,7 @@ public class SearchFragment extends Fragment {
         ChipGroup chipGroup = view.findViewById(R.id.chipGroup);
         LayoutInflater inflater = LayoutInflater.from(requireContext());
         int allChipId = View.NO_ID;
-        for (String name : SampleData.SEARCH_GENRES) {
+        for (String name : GENRES) {
             Chip chip = (Chip) inflater.inflate(R.layout.item_chip, chipGroup, false);
             chip.setId(View.generateViewId());
             chip.setText(name);
@@ -86,10 +103,10 @@ public class SearchFragment extends Fragment {
             }
             Chip chip = group.findViewById(checkedIds.get(0));
             genre = chip.getText().toString();
-            applyFilters();
+            showResults();
         });
 
-        // Debounced search: wait until the user stops typing for 300 ms.
+        // Wait until the user stops typing before calling the API.
         EditText searchField = view.findViewById(R.id.etSearch);
         searchField.addTextChangedListener(new TextWatcher() {
             @Override
@@ -108,26 +125,71 @@ public class SearchFragment extends Fragment {
             }
         });
 
-        applyFilters();
+        search();
     }
 
-    private void applyFilters() {
+    private void search() {
         if (!isAdded() || adapter == null) {
             return;
         }
-        List<Anime> found = SampleData.search(query, genre);
-        adapter.submit(found);
-        int n = found.size();
+        final int number = ++searchNumber;
+        header.setText(query.isEmpty() ? "Loading trending titles…" : "Searching for “" + query + "”…");
+        empty.setVisibility(View.GONE);
+        catalog.search(query, LIMIT, new ApiCallback<CatalogSearchResponseDto>() {
+            @Override
+            public void onSuccess(CatalogSearchResponseDto response) {
+                if (!isAdded() || adapter == null || number != searchNumber) {
+                    return;
+                }
+                lastResults.clear();
+                if (response != null && response.results != null) {
+                    for (SearchAnimeResultDto result : response.results) {
+                        lastResults.add(Anime.fromSearch(result));
+                    }
+                }
+                showResults();
+            }
+
+            @Override
+            public void onError(ApiError error) {
+                if (!isAdded() || adapter == null || number != searchNumber
+                        || Ui.handleSessionExpired(getActivity(), error)) {
+                    return;
+                }
+                lastResults.clear();
+                adapter.submit(lastResults);
+                header.setText("Search didn't work");
+                empty.setText(error.message);
+                empty.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    /** Shows the last results, narrowed to the selected genre chip. */
+    private void showResults() {
+        if (!isAdded() || adapter == null) {
+            return;
+        }
+        List<Anime> shown = new ArrayList<>();
+        for (Anime anime : lastResults) {
+            if ("All".equals(genre) || anime.hasGenre(genre)) {
+                shown.add(anime);
+            }
+        }
+        adapter.submit(shown);
+        int n = shown.size();
         if (query.isEmpty()) {
             header.setText("All".equals(genre)
                     ? String.format(Locale.US, "Trending now · %d titles", n)
-                    : String.format(Locale.US, "%s · %d titles", genre, n));
+                    : String.format(Locale.US, "Trending in %s · %d titles", genre, n));
         } else {
             header.setText(String.format(Locale.US, "%d %s for “%s”", n, n == 1 ? "result" : "results", query));
         }
         if (n == 0) {
             String where = "All".equals(genre) ? "" : " in " + genre;
-            empty.setText(String.format(Locale.US, "No titles match “%s”%s.\nTry another title or genre.", query, where));
+            empty.setText(query.isEmpty()
+                    ? "Nothing trending" + where + " right now."
+                    : String.format(Locale.US, "No titles match “%s”%s.\nTry another title or genre.", query, where));
             empty.setVisibility(View.VISIBLE);
         } else {
             empty.setVisibility(View.GONE);
