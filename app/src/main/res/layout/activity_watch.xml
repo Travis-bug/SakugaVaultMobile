@@ -44,7 +44,7 @@
         android:layout_height="220dp"
         android:background="@color/black">
 
-        <!-- Backdrop image behind the (simulated) player -->
+        <!-- Backdrop image, shown while a stream is being found and after an error -->
         <ImageView
             android:id="@+id/playerImage"
             android:layout_width="match_parent"
@@ -64,65 +64,73 @@
             android:textSize="34sp"
             android:textStyle="bold" />
 
+        <!-- Media3 player: the back end's stream, or a demo video. Its controls give play/pause,
+             seeking, the time, a subtitles button and the full-screen button. -->
+        <androidx.media3.ui.PlayerView
+            android:id="@+id/playerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/black"
+            android:visibility="invisible"
+            app:show_buffering="when_playing"
+            app:show_next_button="false"
+            app:show_previous_button="false"
+            app:show_subtitle_button="true" />
+
+        <TextView
+            android:id="@+id/tvDemoBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:layout_margin="10dp"
+            android:background="@drawable/bg_badge"
+            android:paddingStart="8dp"
+            android:paddingTop="3dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="3dp"
+            android:text="DEMO VIDEO"
+            android:textColor="@color/black"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <!-- "Finding a stream…" while POST /api/watch/{id}/resolve-playback runs -->
         <TextView
             android:id="@+id/tvResolving"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="Resolving stream…"
+            android:gravity="center"
+            android:padding="16dp"
             android:textColor="@color/white"
             android:textSize="14sp"
             android:visibility="gone" />
 
-        <ImageButton
-            android:id="@+id/btnPlayPause"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:layout_gravity="center"
-            android:background="@drawable/bg_play_button"
-            android:contentDescription="@string/cd_play_pause"
-            android:padding="14dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_play"
-            android:tint="@color/white" />
-
+        <!-- Shown when the video can't be played -->
         <LinearLayout
-            android:id="@+id/playerControls"
+            android:id="@+id/playerError"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:background="@drawable/bg_controls"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="12dp"
-            android:paddingTop="16dp"
-            android:paddingEnd="4dp"
-            android:paddingBottom="4dp">
+            android:layout_gravity="center"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:visibility="gone">
 
             <TextView
-                android:id="@+id/tvTime"
+                android:id="@+id/tvPlayerError"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:gravity="center"
                 android:textColor="@color/white"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
-            <SeekBar
-                android:id="@+id/seekBar"
-                android:layout_width="0dp"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPlayerRetry"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:progressBackgroundTint="#80FFFFFF"
-                android:progressTint="@color/sv_accent"
-                android:thumbTint="@color/sv_accent" />
-
-            <ImageButton
-                android:id="@+id/btnFullscreen"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/cd_fullscreen"
-                android:src="@drawable/ic_fullscreen"
-                android:tint="@color/white" />
+                android:layout_marginTop="8dp"
+                android:text="Retry" />
         </LinearLayout>
     </FrameLayout>
 
@@ -217,6 +225,23 @@
                         android:layout_weight="1"
                         android:textSize="12sp" />
                 </LinearLayout>
+
+                <!-- On: play a demo video straight away. Off: look up the live stream first. -->
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchDemo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Demo videos"
+                    android:textColor="@color/sv_text"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvStreamInfo"
+                    style="@style/SvMuted"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/tvSyncStatus"
