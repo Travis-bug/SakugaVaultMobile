@@ -215,7 +215,8 @@ public class HomeFragment extends Fragment {
                 RecyclerView list = rail.findViewById(R.id.railList);
                 list.setLayoutManager(new LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false));
                 list.setRecycledViewPool(sharedPool);
-                list.setHasFixedSize(true);
+                // No setHasFixedSize here: the rail is wrap_content, so its height is not
+                // fixed, and each rail gets its adapter once and never changes it.
                 list.setAdapter(new PosterAdapter(titles, false, anime -> openTitle(anime.id, 1, 0)));
                 railsContainer.addView(rail);
                 rails++;

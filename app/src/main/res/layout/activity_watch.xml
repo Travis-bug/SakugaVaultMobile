@@ -23,7 +23,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/cd_back"
             android:src="@drawable/ic_arrow_back"
-            android:tint="@color/sv_text" />
+            app:tint="@color/sv_text" />
 
         <TextView
             android:id="@+id/tvTopTitle"
@@ -201,14 +201,14 @@
                         app:selectionRequired="true"
                         app:singleSelection="true">
 
-                        <Button
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnSub"
                             style="?attr/materialButtonOutlinedStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="SUB" />
 
-                        <Button
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnDub"
                             style="?attr/materialButtonOutlinedStyle"
                             android:layout_width="wrap_content"
